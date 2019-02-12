@@ -1,0 +1,22 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: run role
+  hosts: machine
+  tasks:
+    - name: include role
+      include_role:
+        # link this role into ~/.ansible/roles
+        name: locale
+
+- name: reconnect to check locale
+  hosts: machine
+  tasks:
+
+    - name: show locale
+      command: locale
+      register: locale
+
+    - name: check locale
+      when: '"LC_ALL=en_US.UTF-8" not in locale.stdout'
+      fail:
+        msg: "set locale failed"

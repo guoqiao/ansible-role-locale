@@ -1,0 +1,73 @@
+---
+
+- name: apt install locales
+  when: 'ansible_distribution == "Debian"'
+  become: yes
+  apt:
+    update_cache: yes
+    name:
+      # Debian provides locales support and language packs via locales
+      - locales
+
+- name: apt install
+  when: 'ansible_distribution == "Ubuntu"'
+  become: yes
+  apt:
+    update_cache: yes
+    name:
+      # Ubuntu split language pack from locales
+      - locales
+      - language-pack-en
+
+- name: yum install
+  when: 'ansible_distribution == "CentOS"'
+  become: yes
+  yum:
+    update_cache: yes
+    name:
+      # CentOS provide locale support and lang packs via glibc-common
+      - libselinux-python
+      - glibc-common
+
+- name: dnf install
+  when: 'ansible_distribution == "Fedora"'
+  become: yes
+  dnf:
+    update_cache: yes
+    name:
+      # Fedora split lang packs to glibc-langpack-xx
+      # and localedef needs glibc-locale-source
+      - libselinux-python
+      - glibc-common
+      - glibc-langpack-en
+      - glibc-locale-source
+
+- name: set locale for Debian family
+  when: 'ansible_os_family == "Debian"'
+  become: yes
+  block:
+    - name: locale-gen
+      locale_gen:
+        name: en_US.UTF-8
+
+    - name: update-locale
+      command: update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+
+- name: run localedef for RedHat family
+  when: 'ansible_os_family == "RedHat"'
+  become: yes
+  command: localedef --inputfile en_US --charmap UTF-8 en_US.UTF-8
+
+- name: udpate /etc/environment for LC_ALL
+  become: yes
+  lineinfile:
+    path: /etc/environment
+    regexp: '^LC_ALL='
+    line: 'LC_ALL=en_US.UTF-8'
+
+- name: udpate /etc/environment for LANG
+  become: yes
+  lineinfile:
+    path: /etc/environment
+    regexp: '^LANG='
+    line: 'LANG=en_US.UTF-8'
