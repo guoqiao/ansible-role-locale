@@ -1,0 +1,51 @@
+---
+- name: update /etc/default/locale for Debian family
+  when: 'ansible_os_family == "Debian"'
+  become: yes
+  block:
+    - name: run update-locale
+      command: update-locale LC_ALL={{locale_name}} LANG={{locale_name}}
+
+    - name: check /etc/default/locale for LC_ALL
+      command: cat /etc/default/locale
+      register: cat_locale
+      failed_when: locale_LC_ALL not in cat_locale.stdout or locale_LANG not in cat_locale.stdout
+
+- name: update /etc/locale.conf for RedHat family
+  when: 'ansible_os_family == "RedHat"'
+  become: yes
+  block:
+    - name: add LC_ALL in /etc/locale.conf
+      lineinfile:
+        path: /etc/locale.conf
+        regexp: '^LC_ALL='
+        line: '{{locale_LC_ALL}}'
+        create: yes
+
+    - name: add LANG in /etc/locale.conf
+      lineinfile:
+        path: /etc/locale.conf
+        regexp: '^LANG='
+        line: 'LANG={{locale_LANG}}'
+        create: yes
+
+    - name: check /etc/locale.conf for LC_ALL
+      command: cat /etc/locale.conf
+      register: cat_locale
+      failed_when: locale_LC_ALL not in cat_locale.stdout or locale_LANG not in cat_locale.stdout
+
+- name: udpate /etc/environment for LC_ALL
+  become: yes
+  lineinfile:
+    path: /etc/environment
+    regexp: '^LC_ALL='
+    line: '{{locale_LC_ALL}}'
+    create: yes
+
+- name: udpate /etc/environment for LANG
+  become: yes
+  lineinfile:
+    path: /etc/environment
+    regexp: '^LANG='
+    line: '{{locale_LANG}}'
+    create: yes

@@ -1,73 +1,53 @@
 ---
 
-- name: apt install locales
-  when: 'ansible_distribution == "Debian"'
-  become: yes
-  apt:
-    update_cache: yes
-    name:
-      # Debian provides locales support and language packs via locales
-      - locales
+- name: gather facts
+  tags: always
+  setup:
 
-- name: apt install
-  when: 'ansible_distribution == "Ubuntu"'
-  become: yes
-  apt:
-    update_cache: yes
-    name:
-      # Ubuntu split language pack from locales
-      - locales
-      - language-pack-en
+- name: show current locale
+  command: locale
+  register: locale
 
-- name: yum install
-  when: 'ansible_distribution == "CentOS"'
-  become: yes
-  yum:
-    update_cache: yes
-    name:
-      # CentOS provide locale support and lang packs via glibc-common
-      - libselinux-python
-      - glibc-common
-
-- name: dnf install
-  when: 'ansible_distribution == "Fedora"'
-  become: yes
-  dnf:
-    update_cache: yes
-    name:
-      # Fedora split lang packs to glibc-langpack-xx
-      # and localedef needs glibc-locale-source
-      - libselinux-python
-      - glibc-common
-      - glibc-langpack-en
-      - glibc-locale-source
-
-- name: set locale for Debian family
-  when: 'ansible_os_family == "Debian"'
-  become: yes
+# if not enabled, try to enable it
+- name: setup locale if not enabled
+  when: locale_LC_ALL not in locale.stdout
   block:
-    - name: locale-gen
-      locale_gen:
-        name: en_US.UTF-8
 
-    - name: update-locale
-      command: update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+    - debug:
+        msg: "locale {{ locale_name }} not enabled by default, try to enable"
 
-- name: run localedef for RedHat family
-  when: 'ansible_os_family == "RedHat"'
-  become: yes
-  command: localedef --inputfile en_US --charmap UTF-8 en_US.UTF-8
+    - name: check all available locales round 1
+      command: locale --all-locales
+      register: locales1
 
-- name: udpate /etc/environment for LC_ALL
-  become: yes
-  lineinfile:
-    path: /etc/environment
-    regexp: '^LC_ALL='
-    line: 'LC_ALL=en_US.UTF-8'
+    - name: install locale if not available
+      include_tasks: install.yml
+      when: locale_name not in locales1.stdout
 
-- name: udpate /etc/environment for LANG
-  become: yes
-  lineinfile:
-    path: /etc/environment
-    regexp: '^LANG='
-    line: 'LANG=en_US.UTF-8'
+    - name: check all available locales round 2
+      command: locale --all-locales
+      register: locales2
+
+    # if still not available, generate it ourselves
+    - name: generate locale if still not available
+      when: locale_name not in locales2.stdout
+      become: yes
+      command: >
+        localedef
+        --charmap {{locale_charmap}}
+        --inputfile {{locale_inputfile}}
+        --no-archive
+        {{locale_name}}
+
+    - name: check all available locales round 3
+      command: locale --all-locales
+      register: locales3
+
+    # if still not available, we fail
+    - name: failed if still not available
+      when: locale_name not in locales3.stdout
+      fail:
+        msg: "fail to gen locale {{locale_name}}"
+
+    - name: enable locale
+      include_tasks: enable.yml

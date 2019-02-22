@@ -1,0 +1,44 @@
+---
+
+- debug:
+    msg: "locale {{ locale_name }} not available by default, try to install"
+
+- name: apt install locales
+  when: 'ansible_pkg_mgr == "apt"'
+  become: yes
+  apt:
+    update_cache: yes
+    name:
+      - locales
+
+- name: apt install
+  when: 'ansible_distribution == "Ubuntu"'
+  become: yes
+  apt:
+    update_cache: yes
+    name:
+      # Ubuntu split language pack from locales
+      - language-pack-en
+
+- name: yum install
+  when: 'ansible_pkg_mgr == "yum"'
+  become: yes
+  yum:
+    update_cache: yes
+    name:
+      # CentOS provide locale support and lang packs via glibc-common
+      - libselinux-python
+      - glibc-common
+
+- name: dnf install
+  when: 'ansible_pkg_mgr == "dnf"'
+  become: yes
+  dnf:
+    update_cache: yes
+    name:
+      # Fedora split lang packs to glibc-langpack-xx
+      # and localedef needs glibc-locale-source
+      - libselinux-python
+      - glibc-common
+      - glibc-langpack-en
+      - glibc-locale-source
