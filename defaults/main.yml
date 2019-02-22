@@ -1,0 +1,16 @@
+---
+
+# /usr/share/i18n/charmaps/UTF-8.gz, some how i can not use abs path
+locale_charmap: UTF-8
+
+# /usr/share/i18n/locales/en_US, lang_REGION, zh_CN|zh_HK
+locale_inputfile: en_US
+
+# dir name for locale, use with --no-archive
+# /usr/lib/locale/en_US.utf8
+# somehow, on all systems, they use `utf8` instead of `UTF-8`
+locale_name: en_US.utf8
+
+# lines in env files
+locale_LC_ALL: 'LC_ALL={{locale_name}}'
+locale_LANG: 'LANG={{locale_name}}'
