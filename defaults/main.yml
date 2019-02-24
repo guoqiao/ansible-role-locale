@@ -6,11 +6,19 @@ locale_charmap: UTF-8
 # /usr/share/i18n/locales/en_US, lang_REGION, zh_CN|zh_HK
 locale_inputfile: en_US
 
-# dir name for locale, use with --no-archive
+# locale name, use with --no-archive
 # /usr/lib/locale/en_US.utf8
-# somehow, on all systems, they use `utf8` instead of `UTF-8`
+# `UTF-8` is the standard name, but glibc will normallize it to `utf8`
+# that's why all the precompiles locales from lang packs ends with `utf8`
+# instead of `UTF-8`
+# Normally, they are interchangeable, but we'd like to follow the system
+# precompiled name style to avoid string compare issues.
 locale_name: en_US.utf8
 
-# lines in env files
-locale_LC_ALL: 'LC_ALL={{locale_name}}'
-locale_LANG: 'LANG={{locale_name}}'
+# LC_ALL will override LANG, but RedHat distros can not set LC_ALL in
+# /etc/locale.conf, so we have both here
+locale_LANG: LANG="{{locale_name}}"
+locale_LC_ALL: LC_ALL="{{locale_name}}"
+
+# LANGUAGE does not exist on RedHat distros, so we ignore it here
+# locale_LANGUAGE: LANG="{{locale_name}}"
