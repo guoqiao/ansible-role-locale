@@ -29,6 +29,7 @@
       # CentOS provide locale support and lang packs via glibc-common
       - libselinux-python
       - glibc-common
+      - libselinux-python  # required by ansible
 
 - name: dnf install
   when: 'ansible_pkg_mgr == "dnf"'
@@ -42,3 +43,4 @@
       - glibc-common
       - glibc-langpack-en
       - glibc-locale-source
+      - libselinux-python  # required by ansible
