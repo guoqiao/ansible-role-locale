@@ -4,35 +4,36 @@
   become: yes
   block:
     - name: run update-locale
-      command: update-locale LC_ALL={{locale_name}} LANG={{locale_name}}
+      command: 'update-locale {{locale_LC_ALL}} {{locale_LANG}}'
 
-    - name: check /etc/default/locale for LC_ALL
+    - name: check /etc/default/locale
       command: cat /etc/default/locale
       register: cat_locale
-      failed_when: locale_LC_ALL not in cat_locale.stdout or locale_LANG not in cat_locale.stdout
+      failed_when: item not in cat_locale.stdout
+      loop:
+        - "{{locale_LC_ALL}}"
+        - "{{locale_LANG}}"
 
 - name: update /etc/locale.conf for RedHat family
   when: 'ansible_os_family == "RedHat"'
   become: yes
   block:
-    - name: add LC_ALL in /etc/locale.conf
-      lineinfile:
-        path: /etc/locale.conf
-        regexp: '^LC_ALL='
-        line: '{{locale_LC_ALL}}'
-        create: yes
 
     - name: add LANG in /etc/locale.conf
       lineinfile:
         path: /etc/locale.conf
         regexp: '^LANG='
-        line: 'LANG={{locale_LANG}}'
+        line: '{{locale_LANG}}'
         create: yes
 
-    - name: check /etc/locale.conf for LC_ALL
+    - name: check /etc/locale.conf for LANG
       command: cat /etc/locale.conf
       register: cat_locale
-      failed_when: locale_LC_ALL not in cat_locale.stdout or locale_LANG not in cat_locale.stdout
+      failed_when: item not in cat_locale.stdout
+      loop:
+        # LC_ALL is not valid in /etc/locale.conf
+        # - "{{locale_LC_ALL}}"
+        - "{{locale_LANG}}"
 
 - name: udpate /etc/environment for LC_ALL
   become: yes
@@ -49,3 +50,5 @@
     regexp: '^LANG='
     line: '{{locale_LANG}}'
     create: yes
+
+- command: cat /etc/environment

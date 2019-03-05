@@ -10,12 +10,11 @@
 
 - name: reconnect to check locale
   hosts: machine
-  environment:
-    LC_ALL: en_US.utf8
-    LANG: en_US.utf8
   tasks:
 
     - name: show locale
       command: locale
       register: locale
-      failed_when: '"LC_ALL=en_US.utf8" not in locale.stdout'
+      # match both `UTF-8` and `utf8`
+      failed_when: '"LC_ALL=en_US.UTF"|lower not in locale.stdout|lower'
+      changed_when: no

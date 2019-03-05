@@ -6,6 +6,7 @@
 
 - name: show current locale
   command: locale
+  changed_when: no
   register: locale
 
 # if not enabled, try to enable it
@@ -14,7 +15,22 @@
   block:
 
     - debug:
-        msg: "locale {{ locale_name }} not enabled by default, try to enable"
+        msg: "{{ locale_LANG }} not enabled by default, try to enable"
+
+    - name: yum install
+      when: 'ansible_pkg_mgr == "yum"'
+      become: yes
+      yum:
+        name:
+          - libselinux-python  # required by lineinfile
+
+    - name: dnf install
+      when: 'ansible_pkg_mgr == "dnf"'
+      become: yes
+      dnf:
+        update_cache: yes
+        name:
+          - libselinux-python  # required by lineinfile
 
     - name: check all available locales round 1
       command: locale --all-locales
@@ -38,6 +54,7 @@
         --inputfile {{locale_inputfile}}
         --no-archive
         {{locale_name}}
+      # will gen a dir in /usr/lib/locale/{{locale_name}}
 
     - name: check all available locales round 3
       command: locale --all-locales

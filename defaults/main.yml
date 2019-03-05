@@ -17,8 +17,8 @@ locale_name: en_US.utf8
 
 # LC_ALL will override LANG, but RedHat distros can not set LC_ALL in
 # /etc/locale.conf, so we have both here
-locale_LANG: LANG="{{locale_name}}"
-locale_LC_ALL: LC_ALL="{{locale_name}}"
+locale_LANG: LANG={{locale_name}}
+locale_LC_ALL: LC_ALL={{locale_name}}
 
 # LANGUAGE does not exist on RedHat distros, so we ignore it here
-# locale_LANGUAGE: LANG="{{locale_name}}"
+# locale_LANGUAGE: LANG={{locale_name}}
